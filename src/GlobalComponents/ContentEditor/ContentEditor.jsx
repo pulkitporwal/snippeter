@@ -347,6 +347,12 @@ const TagSection = ({ tags, onAddTag, onRemoveTag }) => {
             setNewTag("");
         }
     };
+    
+    const handleTagButton = ()=>{
+        onAddTag(newTag.trim());
+        setNewTag("");
+
+    }
 
     return (
         <div className="flex gap-2 text-[12px] w-full text-slate-400 mt-3 ">
@@ -387,6 +393,7 @@ const TagSection = ({ tags, onAddTag, onRemoveTag }) => {
                         placeholder="Add tags (press Enter to add)"
                         className="bg-neutral-900 text-base leading-relaxed font-normal outline-none focus:outline-none w-full p-2 text-white"
                     />
+                    <span onClick={handleTagButton} className="absolute right-5 top-[50%] -translate-y-1/2 text-4xl cursor-pointer">+</span>
                 </div>
             </div>
         </div>
