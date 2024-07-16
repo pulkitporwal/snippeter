@@ -9,6 +9,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import ArrowDropDownOutlinedIcon from "@mui/icons-material/ArrowDropDownOutlined";
 import { IconButton } from "@mui/material";
 import AceEditor from "react-ace";
+import { generateCode } from "@/utils/generateCodeWithGemini";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-python";
@@ -65,7 +67,7 @@ const ContentEditor = () => {
         if (openContentEditor && selectedNote) {
             setFormData({
                 ...selectedNote,
-                language: selectedNote.language || "javascript", 
+                language: selectedNote.language || "javascript",
             });
         }
     }, [openContentEditor, selectedNote]);
@@ -123,10 +125,10 @@ const ContentEditor = () => {
             const { data } = await response.json();
 
             if (selectedNote && selectedNote._id) {
-                updateSnippet(data?.snippet); 
-                setSelectedNote(data?.snippet); 
+                updateSnippet(data?.snippet);
+                setSelectedNote(data?.snippet);
             } else {
-                addSnippet(data?.snippet); 
+                addSnippet(data?.snippet);
             }
 
             setSavingData({
@@ -188,6 +190,7 @@ const ContentEditor = () => {
                     <CardDescription
                         description={formData.description}
                         handleChange={handleChange}
+                        setFormData={setFormData}
                     />
                     <TagSection
                         tags={formData.tags}
@@ -212,8 +215,9 @@ const ContentEditor = () => {
     );
 };
 
-const CardDescription = ({ description, handleChange }) => {
+const CardDescription = ({ description, handleChange, setFormData }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     const textareaRef = useRef(null);
 
     useEffect(() => {
@@ -224,6 +228,21 @@ const CardDescription = ({ description, handleChange }) => {
             }px`;
         }
     }, [description]);
+
+    const handleCodeGenerationWithAI = async () => {
+        setIsGenerating(true);
+        try {
+            const result = await generateCode(description);
+            if (result) {
+                setFormData((prev) => ({ ...prev, code: result }));
+            }
+        } catch (error) {
+            console.error("Error generating code:", error);
+            // You might want to show an error message to the user here
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     return (
         <div className="flex gap-2 text-[12px] w-full text-slate-100 mt-8 ">
@@ -245,6 +264,14 @@ const CardDescription = ({ description, handleChange }) => {
                     id="description"
                     placeholder="Add Description"
                     className="bg-neutral-900 text-base leading-relaxed font-normal outline-none focus:outline-none w-full resize-none overflow-hidden p-2 text-white"
+                />
+            </div>
+            <div onClick={handleCodeGenerationWithAI}>
+                <AutoFixHighIcon
+                    className={`flex items-center justify-center mt-5 sm:text-3xl text-lg cursor-pointer ${
+                        isGenerating ? "animate-spin" : ""
+                    }`}
+                    sx={{ color: "#f5e505" }}
                 />
             </div>
         </div>
@@ -347,12 +374,11 @@ const TagSection = ({ tags, onAddTag, onRemoveTag }) => {
             setNewTag("");
         }
     };
-    
-    const handleTagButton = ()=>{
+
+    const handleTagButton = () => {
         onAddTag(newTag.trim());
         setNewTag("");
-
-    }
+    };
 
     return (
         <div className="flex gap-2 text-[12px] w-full text-slate-400 mt-3 ">
@@ -393,7 +419,12 @@ const TagSection = ({ tags, onAddTag, onRemoveTag }) => {
                         placeholder="Add tags (press Enter to add)"
                         className="bg-neutral-900 text-base leading-relaxed font-normal outline-none focus:outline-none w-full p-2 text-white"
                     />
-                    <span onClick={handleTagButton} className="absolute right-5 top-[50%] -translate-y-1/2 text-4xl cursor-pointer">+</span>
+                    <span
+                        onClick={handleTagButton}
+                        className="absolute right-5 top-[50%] -translate-y-1/2 text-4xl cursor-pointer"
+                    >
+                        +
+                    </span>
                 </div>
             </div>
         </div>
